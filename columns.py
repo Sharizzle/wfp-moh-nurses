@@ -1,0 +1,1 @@
+HOSPITAL_ID = "hospital_id"
