@@ -35,12 +35,14 @@ def rename_columns(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
     """
     Rename columns using a dictionary {old: new}.
     """
+    df = df.copy()
     return df.rename(columns=mapping)
 
 def missing_report(df: pd.DataFrame) -> pd.DataFrame:
     """
     Return a summary of missing values by column.
     """
+    df = df.copy()
     return (
         df.isna()
         .sum()
@@ -68,6 +70,7 @@ def fill_missing(df: pd.DataFrame, fill_map: dict) -> pd.DataFrame:
     Fill missing values using a column: value map.
     Example: {"age": 0, "city": "unknown"}
     """
+    df = df.copy()
     return df.fillna(fill_map)
 
 def drop_rows_by_value(df: pd.DataFrame, column: str, value) -> pd.DataFrame:
@@ -89,7 +92,8 @@ def drop_rows_by_value(df: pd.DataFrame, column: str, value) -> pd.DataFrame:
         DataFrame without the matching rows.
     """
     df = df.copy()
-    return df[df[column] != value].reset_index(drop=True)
+    mask = df[column] != value
+    return df.loc[mask].reset_index(drop=True)
 
 def drop_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     """
@@ -107,4 +111,5 @@ def drop_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     pd.DataFrame
         DataFrame without the specified columns.
     """
+    df = df.copy()
     return df.drop(columns=columns, errors="ignore")
