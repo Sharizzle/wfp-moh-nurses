@@ -5,21 +5,29 @@ set -e  # stop on first error
 # Move up to project root
 cd "$(dirname "$0")/.."
 
-# Install uv if not already installed
-if ! command -v uv &> /dev/null; then
-    echo "uv not found, installing..."
-    pip install uv
-else
-    echo "uv is already installed."
+# Set venv directory name
+VENV_DIR=".venv"
+
+# Create virtual environment if it does not exist
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating virtual environment in $VENV_DIR..."
+    python3 -m venv "$VENV_DIR"
 fi
 
-# Sync dependencies
-echo "Syncing dependencies..."
-uv sync
+# Activate the virtual environment
+# For bash and zsh
+source "$VENV_DIR/bin/activate"
 
-# Pick script to run (default = scripts/myscript.py)
-SCRIPT=${1:-scripts/myscript.py}
+# Upgrade pip within the venv
+python -m pip install --upgrade pip
 
-# Run the script
-echo "Running $SCRIPT..."
-uv run "$SCRIPT"
+# Install dependencies if requirements.txt exists
+if [ -f requirements.txt ]; then
+    echo "Installing dependencies from requirements.txt..."
+    pip install -r requirements.txt
+elif [ -f pyproject.toml ]; then
+    echo "Installing dependencies from pyproject.toml using pip..."
+    pip install .
+else
+    echo "No requirements.txt or pyproject.toml found, skipping dependency installation."
+fi
