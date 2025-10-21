@@ -32,6 +32,28 @@ def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     )
     return df
 
+def denormalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Do the opposite of snake_case normalization:
+    - Replace underscores with spaces
+    - Capitalize each word
+    - Restore hyphens where spaces were previously inserted? (best effort: convert every other space to hyphen)
+    - (Can't recover lost non-alphanumeric chars, so skip that)
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with denormalized (prettified) column names.
+    """
+    df = df.copy()
+    df.columns = [col.replace("_", " ").title() for col in df.columns]
+    return df
+
 def rename_columns(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
     """
     Rename columns using a dictionary {old: new}.
