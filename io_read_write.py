@@ -2,7 +2,10 @@ from pathlib import Path
 import pandas as pd
 from datetime import datetime
 
-def read_csv(filename: str, data_dir: Path = Path("data")) -> pd.DataFrame:
+def read_csv(
+    filename: str,
+    data_dir: Path = Path("data")
+) -> pd.DataFrame:
     """
     Read a CSV file from the data folder (default) with pyarrow backend.
     """
@@ -10,6 +13,27 @@ def read_csv(filename: str, data_dir: Path = Path("data")) -> pd.DataFrame:
     df = pd.read_csv(path, dtype_backend="pyarrow")
     return df
 
+def read_xlsx(filename: str, sheet_name: str, data_dir: Path = Path("data")) -> pd.DataFrame:
+    """
+    Read a XLSX file from the data folder (default) with pyarrow backend.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the XLSX file.
+    sheet_name : str
+        Name of the sheet to read.
+    data_dir : Path, optional
+        Directory containing the data file (default: Path("data")).
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with the contents of the specified sheet.
+    """
+    path = data_dir / filename
+    df = pd.read_excel(path, sheet_name=sheet_name, dtype_backend="pyarrow", engine="openpyxl")
+    return df
 
 def write_csv(
     df: pd.DataFrame,

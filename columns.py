@@ -1,1 +1,7 @@
-HOSPITAL_ID = "hospital_id"
+PATIENT_CARE_AREA = "patient_care_area"
+NURSING_SERVICE = "nursing_service"
+COUNTRY = "country"
+RATIO_SOURCE = "ratio_source"
+DRIVER = "driver"
+RATIO_DEFINITION = "ratio_definition"
+RATIO_VALUE = "ratio_value"
