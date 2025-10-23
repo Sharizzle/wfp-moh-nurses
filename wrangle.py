@@ -1,14 +1,15 @@
 import pandas as pd
 import numpy as np
+from typing import Any, Optional
 
 def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Normalize column names to snake_case:
+    Normalize column names to snake_case, but preserve '%' as is:
     - Strip leading/trailing spaces
     - Lowercase everything
     - Replace spaces and hyphens with underscores
     - Remove duplicate underscores
-    - Remove non-alphanumeric characters (except underscores)
+    - Remove non-alphanumeric characters (except underscores and %)
 
     Parameters
     ----------
@@ -26,7 +27,7 @@ def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
         .str.strip()                      # remove leading/trailing spaces
         .str.lower()                      # lowercase
         .str.replace(r"[ \-]+", "_", regex=True)   # spaces/hyphens → underscore
-        .str.replace(r"[^\w_]", "", regex=True)    # drop non-alphanumeric
+        .str.replace(r"[^\w_%]", "", regex=True)   # drop non-alphanumeric except _ and %
         .str.replace(r"__+", "_", regex=True)      # collapse multiple underscores
         .str.strip("_")                   # remove leading/trailing underscores
     )
@@ -110,9 +111,12 @@ def expand_df_by_values(df: pd.DataFrame, new_col: str, values, as_category: boo
     """
     df = df.copy()
     n_vals = len(values)
-    df_out = df.loc[df.index.repeat(n_vals)].copy()
-    col = np.tile(values, len(df))
+    # Reset index to ensure unique, monotonic numbering before repeating
+    df_reset = df.reset_index(drop=True)
+    df_out = df_reset.loc[df_reset.index.repeat(n_vals)].copy()
+    col = np.tile(values, len(df_reset))
     df_out[new_col] = pd.Categorical(col) if as_category else col
+    df_out = df_out.reset_index(drop=True)
     return df_out
 
 def fill_missing(df: pd.DataFrame, fill_map: dict) -> pd.DataFrame:
@@ -163,3 +167,55 @@ def drop_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     """
     df = df.copy()
     return df.drop(columns=columns, errors="ignore")
+
+def vlookup_df(
+    left_df: pd.DataFrame,
+    right_df: pd.DataFrame,
+    left_on: str | list[str],
+    right_on: str | list[str],
+    return_col: str,
+    default: Optional[Any] = None
+) -> pd.Series | pd.DataFrame:
+    """
+    Acts like Excel's VLOOKUP for an entire DataFrame column, supporting single or multiple columns as keys.
+
+    Parameters
+    ----------
+    left_df : pd.DataFrame
+        The DataFrame containing the keys to look up.
+    right_df : pd.DataFrame
+        The lookup table DataFrame containing the lookup and return columns.
+    left_on : str or list of str
+        Column(s) in `left_df` whose values will be looked up.
+    right_on : str or list of str
+        Column(s) in `right_df` where matching keys will be searched.
+    return_col : str
+        Column in `right_df` whose values will be returned.
+    default : Any, optional
+        Value to fill when a match is not found (default: None).
+
+    Returns
+    -------
+    pd.Series
+        A Series aligned with `left_df` containing the looked-up values.
+    """
+    if isinstance(left_on, str):
+        left_on = [left_on]
+    if isinstance(right_on, str):
+        right_on = [right_on]
+    # Compose a DataFrame that has all the needed columns for merge
+    right_merge = right_df[right_on + [return_col]].copy()
+    merged = pd.merge(
+        left_df[left_on].reset_index(drop=True),
+        right_merge,
+        how="left",
+        left_on=left_on,
+        right_on=right_on
+    )
+    if default is not None:
+        # Only call .fillna if default is not None, to avoid ValueError with pandas
+        result = merged[return_col].fillna(default)
+    else:
+        result = merged[return_col]
+    return result
+
