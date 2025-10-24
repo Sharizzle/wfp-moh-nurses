@@ -1,3 +1,7 @@
+# Parameters
 CURRENT_YEAR = 2025
 PROJECTION_LAST_YEAR = 2030
-GENERATE_FILES = False
+GENERATE_FILES = True
+
+# Global Variables
+ABBREVIATIONS = ["Aprn"]

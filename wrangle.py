@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from typing import Any, Optional
+import re
+
+import config
 
 def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -51,8 +54,27 @@ def denormalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         DataFrame with denormalized (prettified) column names.
     """
+
+    # Define abbreviations that should be fully upper-cased if present in any column name
+    abbreviations = config.ABBREVIATIONS
+
+    def upcase_abbr_in_col(col: str, abbreviations) -> str:
+        for abbr in abbreviations:
+            # Use regex for word boundary (case insensitive, preserve %)
+            pattern = re.compile(re.escape(abbr), re.IGNORECASE)
+            col = pattern.sub(abbr.upper(), col)
+        return col
+
     df = df.copy()
-    df.columns = [col.replace("_", " ").title() for col in df.columns]
+    new_cols = []
+    for col in df.columns:
+        # Step 1: underscore to space, title case
+        col_pretty = col.replace("_", " ").title()
+        # Step 2: upper case abbreviations inside column
+        col_pretty = upcase_abbr_in_col(col_pretty, abbreviations)
+        new_cols.append(col_pretty)
+    df.columns = new_cols
+
     return df
 
 def rename_columns(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
